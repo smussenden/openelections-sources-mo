@@ -1,0 +1,209 @@
+---
+title: "MO_2020_parser"
+author: "Sean Mussenden"
+date: "8/9/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Load libraries
+
+```{r}
+library(tidyverse)
+library(tabulizer)
+#install.packages('tesseract')
+library(pdftools)
+library(tesseract)
+
+```
+
+# Load data
+
+### Store list of PDF Files
+```{r}
+# List of pdf_files
+## Better way to do this is add list of pdf files in subfolder
+pdf_list <- c("Adair MO 2020-3-10 Adir Co Final.pdf",
+"Andrew MO march 2020.pdf",
+"Atchison MO ELECTION_RESULTS_PRES_PREFERENCE_MARCH_2020_OFFICIAL.pdf",
+"Audrain MO PPP 2020 CANVASS.pdf",
+"Bates MO ppp_202002305420200416085953.pdf",
+"Boone MO 20200310P.pdf",
+"Buchanan MO 2020, March 10 Presidentail Primary Precinct By Precinct Results - Copy.pdf",
+"Butler MO 2020 PPP.pdf",
+"Callaway MO MX-M365N_20200608_160845.pdf",
+"Cape Girardeau MO Ballot-and-Results-March-2020.pdf",
+"Carroll MO March 10 2020 Election Results.pdf",
+"Chariton MO Primary Official Results.pdf",
+"Christian MO SOVC_OFFICIAL_Mar_13_2020_12_55_35.pdf",
+"Clark MO PPP_07012020_110337.pdf",
+"Clay MO 2020-03-10_Presidential-Preference-Primary_Election_Detail-Report_OFFICIAL.pdf",
+"Clinton MO 4397_001.pdf",
+"Clinton MO PP 2020 official precinct results.pdf",
+"Cole MO 3-10-2020 Abstract_1.pdf",
+"Crawford MO MARCH 10 2020 PRIMARY BY PRECINCT_2020_05_12_15_30_48_707.pdf",
+"Dade MO Pres Primary DOC071720-07172020142947.pdf",
+"Dallas MO PPP 2020.pdf",
+"Franklin MO SOVC_Mar_10_2020_10_48_55PPP.pdf",
+"Gasconade MO Presidential Primary Mar 16, 2020 (2).pdf",
+"Gentry MO 2020 Presidential Primary.pdf",
+"Grundy MO Presidential Primary by Polling Place.pdf",
+"Harrison MO 2020 Presidential Primary.pdf",
+"Henry MO March 2020 Presidential Preference Primary Results.pdf",
+"Hickory MO March 2020 Results.pdf",
+"Holt MO 2020 Pres Primary.pdf",
+"Howard MO Presidential Preference Primary results by precinct.pdf",
+"Howell MO March 10, 2020 Election.pdf",
+"Iron MO Official Precinct PPP 2020.pdf",
+"Jackson MO SOVC_Mar_23_2020_09_25_47CON.pdf",
+"Jackson MO SOVC_Mar_23_2020_09_25_47DEM.pdf",
+"Jackson MO SOVC_Mar_23_2020_09_25_47GRE.pdf",
+"Jackson MO SOVC_Mar_23_2020_09_25_47LIB.pdf",
+"Jackson MO SOVC_Mar_23_2020_09_25_47REP.pdf",
+"Jackson MO VoterTurnout_Mar_23_2020_09_25_17-.pdf",
+"Jefferson MO 2020 March Presidential Primary Election by Precinct .pdf",
+"Johnson MO 2020 Election Summary March - Official Results.pdf",
+"Laclede MO Presidential Primary.pdf",
+"Lawrence MO March 2020 PPP Official Results by Precinct.pdf",
+"LINN CO 2020 PRES PREF.pdf",
+"Livingston MO 2020 Pres Primary.pdf",
+"Maries MO Presidential Primary.pdf",
+"Marion MO MARCH-10-2020-Presidential-Preference-Primary.pdf",
+"McDonald MO Official March 10, 2020 Presidential Preference Primary.pdf",
+"Mercer MO 2020 Pres Primary.pdf",
+"Miller MO March 2020 Election.pdf",
+"Moniteau MO March 10 2020 final election results.pdf",
+"New Madrid MO 2020 Pres Primary.pdf",
+"Nodaway MO 2020 Presidential Primary.pdf",
+"Oregon MO 2020 Pres Primary.pdf",
+"Osage MO Presidential Primary.pdf",
+"Ozark MO March 2020 PPP Election Results.pdf",
+"Pemiscot MO 2020PRESIDENTIALPRIM.pdf",
+"Perry MO March 10 2020 Presidential Preference Primay.pdf",
+"Pettis MO 20200421100543720.pdf",
+"Pike MO Presidential Primary.pdf",
+"Platte MO DOC031320-03132020150910.pdf",
+"Polk MO Primary DOC070620-07062020105815.pdf",
+"Pulaski MO Presidential Primary.pdf",
+"Putnam MO SOVC March 2020.pdf",
+"Saline MO 2020 Pres Primary.pdf",
+"Scott MO presidential-primary-preference-results.pdf",
+"St Charles MO_SOVC_Mar_17_2020_09_56_23.pdf",
+"St. Francois MO 200_P00100_to_P10000A_Election_Summary.pdf",
+"St. Louis County MO Canvass Results-3-20-2020 05-45-02 PM.pdf",
+"STLCity_Mar20-Citywide-Precinct-Breakdown.pdf",
+"Taney MO OFFICIAL_SOVC_Mar_17_2020_13_32_57.pdf",
+"Warren MO 2020 Presidential Primary.pdf",
+"WashingtonCounty MO MARCH-10-2020-PPP-CANVASSED-RESULTS-1.pdf")
+
+### Read in list of pdfs
+
+
+
+#pdf_list <- pdf_list[3]
+#print(pdf_list)
+```
+
+```{r}
+i <- 1
+
+for (pdf in pdf_list) {
+  # build filepath
+  filepath <- paste0("../",pdf)
+  extract_pdf_tables <- extract_tables(filepath)
+  
+  if(length(extract_pdf_tables) == 0) {
+    print(paste0(pdf," - no tables recognized"))
+  } else {
+    print(paste0(pdf," - ", length(extract_pdf_tables), " tables recognized"))
+    dataframe_name <- paste0(str_sub(pdf, start = 1L, end = 3L),"_",i)
+    print(dataframe_name)
+    assign(dataframe_name,extract_pdf_tables)
+  }
+  i <- i+1
+}
+
+```
+
+Using the source files we've collected here, the goal is to create a single CSV file for each county, with the following headers:
+
+county, precinct, office, district, party, candidate, votes
+
+If the county file also provides a breakdown of votes by method, include that using the following headers, as applicable:
+
+early_voting, election_day, provisional, absentee, federal
+
+Include the following offices:
+
+Registered Voters (if available)
+Ballots Cast (if available)
+President
+
+### Trying PDF Tools
+```{r}
+
+#z <- pdf_ocr_text("../Adair MO 2020-3-10 Adir Co Final.pdf", pages=6)
+
+y <- z %>%
+  as_tibble()
+  #as.data.frame(colnames()=c("hello"))
+ 
+x <- y %>%
+  mutate(value = str_split(value,"\n")) %>%
+  unnest(value) %>%
+  filter(value != "") %>%
+  
+  
+  filter(str_detect(value, "Registered Voters"))
+  
+  mutate(county = "Adair") %>%
+  mutate(office = "President") %>%
+  
+
+#county, precinct, office, district, party, candidate, votes
+
+
+
+
+```
+
+pdf_ocr_text(
+pdf,
+pages = NULL,
+opw = "",
+upw = "",
+language = "eng",
+dpi = 600
+)
+
+```
+
+```{r}
+x_Atc_1 <- Atc_1 %>%
+  as.data.frame()
+
+x_Boo_1 <- Boo_1[2] %>%
+  #unlist() %>%
+  as.data.frame()
+
+x_Cap_1 <- Cap_1 %>%
+  unlist() %>%
+  as.data.frame()
+
+```
+library("tabulizer")
+f <- "../Andrew MO march 2020.pdf"
+
+
+#f2 <- "https://github.com/leeper/tabulizer/raw/master/inst/examples/data.pdf"
+x<- extract_text(f)
+x
+print(x)
+# extract table from first page of example PDF
+#tab <- extract_tables(f, pages = 1)
+#head(tab[[1]])
+
+```
